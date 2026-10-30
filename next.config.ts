@@ -27,6 +27,10 @@ const csp = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // as fontes e a foto do PDF são lidas do disco: precisam ir junto para a Vercel
+  outputFileTracingIncludes: {
+    '/p/[id]/[token]/pdf': ['./lib/pdf-assets/**'],
+  },
   async headers() {
     return [
       {

@@ -321,7 +321,7 @@ export default async function PaginaProposta({ params }: Props) {
             <ArrowUpRight aria-hidden className="ml-auto h-4 w-4 text-roxo-2 print:hidden" weight="bold" />
           </a>
           <div className="flex items-center gap-3 p-2 print:hidden">
-            <Imprimir />
+            <Imprimir href={`/p/${p.id}/${p.token}/pdf`} />
           </div>
           <p className="pt-4 text-[12.5px] leading-relaxed text-mudo-2 sm:col-span-3">
             Proposta feita para {titulo} em {dataLonga(p.atualizadaEm)}. {CONTATO.nome} · {CONTATO.cidade}.

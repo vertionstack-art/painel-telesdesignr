@@ -9,6 +9,7 @@ import {
   CircleNotch,
   Copy,
   CopySimple,
+  FilePdf,
   FilmStrip,
   Globe,
   Images,
@@ -613,15 +614,25 @@ export default function Editor({
                 </button>
               </div>
               {link && !sujo && (
-                <a
-                  href={link}
-                  target="_blank"
-                  rel="noopener"
-                  className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full text-[14px] font-bold text-roxo transition-colors hover:bg-lilas-claro"
-                >
-                  Ver como o cliente vê <ArrowSquareOut className="h-4 w-4" weight="bold" />
-                </a>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <a
+                    href={`${link}/pdf`}
+                    download
+                    className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full text-[14px] font-bold text-roxo transition-colors hover:bg-lilas-claro"
+                  >
+                    <FilePdf className="h-4 w-4" weight="bold" /> Baixar PDF
+                  </a>
+                  <a
+                    href={link}
+                    target="_blank"
+                    rel="noopener"
+                    className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full text-[14px] font-bold text-roxo transition-colors hover:bg-lilas-claro"
+                  >
+                    Ver online <ArrowSquareOut className="h-4 w-4" weight="bold" />
+                  </a>
+                </div>
               )}
+              {sujo && id && <p className="text-center text-[12.5px] font-semibold text-[#6f6880]">Salve para baixar o PDF com as mudanças.</p>}
             </div>
             {aviso && (
               <p role={aviso.tipo === 'erro' ? 'alert' : 'status'} className={`mt-3 text-center text-[13.5px] font-bold ${aviso.tipo === 'erro' ? 'text-[#c0263f]' : 'text-ok'}`}>
