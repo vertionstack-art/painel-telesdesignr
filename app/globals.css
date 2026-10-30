@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+/*
+ * A identidade da landing (telesdesignr/index.html): tinta quase preta,
+ * roxo #8b2cff, lilás de destaque, Archivo condensada nos títulos e Plus
+ * Jakarta Sans no texto. Botões em pílula, cartões de 24px, peças internas
+ * de 14px.
+ */
+@theme {
+  --color-tinta: #0b0a0e;
+  --color-tinta-2: #15131a;
+  --color-tinta-3: #201d27;
+  --color-tinta-4: #2c2835;
+  --color-papel: #f7f5fb;
+  --color-papel-2: #efeaf8;
+  --color-papel-3: #e3deec;
+  --color-mudo: #bdb7cb;
+  --color-mudo-2: #8d869c;
+  --color-roxo: #8b2cff;
+  --color-roxo-2: #a95cff;
+  --color-roxo-escuro: #4a1d96;
+  --color-lilas: #d9c2ff;
+  --color-lilas-claro: #ece3ff;
+  --color-wa: #25d366;
+  --color-wa-escuro: #03200e;
+  --color-ok: #1b8a45;
+  --color-erro: #ff6b81;
+
+  --font-sans: var(--font-jakarta), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-archivo), "Arial Narrow", sans-serif;
+  --font-mao: var(--font-caveat), cursive;
+
+  --radius-cartao: 24px;
+  --radius-peca: 14px;
+
+  --ease-saida: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    color-scheme: dark;
+  }
+  body {
+    background: var(--color-tinta);
+    color: var(--color-papel);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background: var(--color-roxo);
+    color: #fff;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-lilas);
+    outline-offset: 3px;
+  }
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  input, textarea, select, button {
+    font: inherit;
+    color: inherit;
+  }
+  input::placeholder, textarea::placeholder {
+    color: var(--color-mudo-2);
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-tinta-4) transparent;
+  }
+  input, textarea {
+    caret-color: var(--color-roxo-2);
+  }
+}
+
+@utility condensada {
+  font-family: var(--font-display);
+  font-stretch: 66%;
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 0.92;
+  letter-spacing: -0.01em;
+}
+
+@utility larga {
+  font-family: var(--font-display);
+  font-stretch: 104%;
+  font-weight: 640;
+}
+
+@utility numeros {
+  font-variant-numeric: tabular-nums;
+}
+
+/* destaque riscado em lilás, como "sob medida" e "orçamento" na landing */
+@utility marca-texto {
+  position: relative;
+  display: inline-block;
+  z-index: 0;
+  padding: 0 0.08em;
+  color: var(--color-tinta);
+  &::before {
+    content: "";
+    position: absolute;
+    /* sobe um pouco: o acento de "VOCÊ" fica em cima do lilás, não na tinta */
+    inset: -0.12em -0.04em 0.02em;
+    background: var(--color-lilas);
+    z-index: -1;
+    transform: skew(-6deg) rotate(-1.5deg);
+    border-radius: 4px;
+  }
+}
+
+@utility contorno {
+  color: transparent;
+  -webkit-text-stroke: 1.5px currentColor;
+}
+
+/* campo de texto padrão do painel */
+@utility campo {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: var(--radius-peca);
+  border: 1.5px solid rgb(255 255 255 / 0.16);
+  background: var(--color-tinta);
+  color: var(--color-papel);
+  font-size: 15px;
+  transition: border-color 180ms ease;
+  &:hover {
+    border-color: rgb(255 255 255 / 0.28);
+  }
+  &:focus {
+    outline: none;
+    border-color: var(--color-roxo-2);
+  }
+}
+
+/* só desliza: o texto nunca começa invisível (aba em segundo plano pausa a animação) */
+@keyframes subir {
+  from {
+    transform: translateY(14px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0ms !important;
+    transition-duration: 0ms !important;
+  }
+}
