@@ -18,7 +18,12 @@ function acharUrl(): string {
   const direta = env.DATABASE_URL || env.POSTGRES_URL;
   if (direta) return direta;
   const chave = Object.keys(env).find((k) => /(^|_)(DATABASE_URL|POSTGRES_URL)$/.test(k) && env[k]);
-  return chave ? env[chave]! : '';
+  if (chave) return env[chave]!;
+  // qualquer prefixo (STORAGE_URL, NEON_URL…): a primeira *_URL que for endereço de Postgres
+  const qualquer = Object.keys(env)
+    .sort()
+    .find((k) => k.endsWith('_URL') && !/UNPOOLED|NON_POOLING/.test(k) && /^postgres(ql)?:\/\//.test(env[k] || ''));
+  return qualquer ? env[qualquer]! : '';
 }
 
 /**
