@@ -501,7 +501,7 @@ export default function Editor({
             {recado.erro ||
               (iaLigada
                 ? 'Escreva do seu jeito e clique em gerar: a IA reescreve no tom da proposta, sem inventar nada. Você pode editar depois.'
-                : 'Para ligar a IA, cadastre a chave ANTHROPIC_API_KEY na Vercel.')}
+                : 'Para ligar a IA, cadastre a chave GROQ_API_KEY na Vercel.')}
           </p>
         </Etapa>
       </div>
