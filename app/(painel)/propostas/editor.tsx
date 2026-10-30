@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
+  ArrowCounterClockwise,
   ArrowSquareOut,
   CircleNotch,
   Copy,
@@ -14,6 +15,7 @@ import {
   InstagramLogo,
   PenNib,
   Plus,
+  Sparkle,
   Trash,
   VideoCamera,
   WhatsappLogo,
@@ -34,7 +36,7 @@ import {
 } from '@/lib/precos';
 import type { Status } from '@/lib/dados';
 import { dataHora, numeroWa, primeiroNome } from '@/lib/formato';
-import { apagar, duplicar, enviada, mudarStatus, salvar } from '../acoes';
+import { apagar, duplicar, enviada, mudarStatus, recadoComIa, salvar } from '../acoes';
 import { Selo } from '../status';
 import { Campo, CampoValor, Contador, Etapa, Marcador, Opcoes, Pilulas, Servico } from './pecas';
 
@@ -51,7 +53,17 @@ export interface Meta {
 const semAssinatura = () => () => {};
 const novoId = () => Math.random().toString(36).slice(2, 9);
 
-export default function Editor({ inicial, tabela, meta }: { inicial: DadosProposta; tabela: Tabela; meta: Meta | null }) {
+export default function Editor({
+  inicial,
+  tabela,
+  meta,
+  iaLigada,
+}: {
+  inicial: DadosProposta;
+  tabela: Tabela;
+  meta: Meta | null;
+  iaLigada: boolean;
+}) {
   const router = useRouter();
   const [d, setD] = useState<DadosProposta>(inicial);
   const [id, setId] = useState<string | null>(meta?.id ?? null);
@@ -77,6 +89,25 @@ export default function Editor({ inicial, tabela, meta }: { inicial: DadosPropos
   const servico = <K extends keyof DadosProposta['servicos']>(campo: K, v: DadosProposta['servicos'][K]) =>
     mudar((x) => ({ ...x, servicos: { ...x.servicos, [campo]: v } }));
   const livre = (i: number, p: Partial<ItemLivre>) => mudar((x) => ({ ...x, livres: x.livres.map((it, j) => (j === i ? { ...it, ...p } : it)) }));
+
+  // o recado com IA: o que você tinha escrito antes fica guardado para voltar
+  const [recado, setRecado] = useState<{ gerando: boolean; erro: string | null; anterior: string | null }>({ gerando: false, erro: null, anterior: null });
+  async function gerarRecado() {
+    // "Gerar de novo" parte do seu rascunho original, não do texto da IA
+    const base = recado.anterior ?? d.mensagem;
+    if (base.trim().length < 8) {
+      setRecado((r) => ({ ...r, erro: 'Escreva primeiro, do seu jeito, o que quer dizer ao cliente.' }));
+      return;
+    }
+    setRecado((r) => ({ ...r, gerando: true, erro: null }));
+    const r = await recadoComIa(base, d, tabela);
+    if (r.ok) {
+      mudar((x) => ({ ...x, mensagem: r.texto }));
+      setRecado({ gerando: false, erro: null, anterior: base });
+    } else {
+      setRecado((x) => ({ ...x, gerando: false, erro: r.erro }));
+    }
+  }
 
   const link = id && token && origem ? `${origem}/p/${id}/${token}` : null;
 
@@ -432,12 +463,46 @@ export default function Editor({ inicial, tabela, meta }: { inicial: DadosPropos
             </span>
             <textarea
               value={d.mensagem}
-              onChange={(e) => mudar((x) => ({ ...x, mensagem: e.target.value }))}
-              rows={4}
-              placeholder="Ex.: Pelo que conversamos, o foco é deixar o Instagram com cara profissional antes da inauguração."
-              className="campo min-h-[112px] resize-y py-3 leading-relaxed"
+              onChange={(e) => {
+                mudar((x) => ({ ...x, mensagem: e.target.value }));
+                setRecado((r) => ({ ...r, erro: null }));
+              }}
+              rows={5}
+              disabled={recado.gerando}
+              placeholder="Escreva do seu jeito, ex.: agradecer a oportunidade, dizer que a ideia é deixar o Instagram com cara profissional antes da inauguração e que qualquer ajuste é só falar"
+              className="campo min-h-[132px] resize-y py-3 leading-relaxed disabled:opacity-60"
             />
           </label>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={gerarRecado}
+              disabled={recado.gerando || !iaLigada}
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-roxo pl-4 pr-5 text-[14px] font-extrabold text-white transition-transform duration-150 ease-[var(--ease-saida)] active:scale-[0.97] disabled:opacity-45"
+            >
+              {recado.gerando ? <CircleNotch className="h-4 w-4 animate-spin" weight="bold" /> : <Sparkle className="h-4 w-4" weight="fill" />}
+              {recado.gerando ? 'Escrevendo…' : d.mensagem.trim() && recado.anterior !== null ? 'Gerar de novo' : 'Gerar recado com IA'}
+            </button>
+            {recado.anterior !== null && !recado.gerando && (
+              <button
+                type="button"
+                onClick={() => {
+                  const volta = recado.anterior ?? '';
+                  mudar((x) => ({ ...x, mensagem: volta }));
+                  setRecado({ gerando: false, erro: null, anterior: null });
+                }}
+                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-white/20 px-4 text-[13.5px] font-bold transition-colors hover:border-white/50"
+              >
+                <ArrowCounterClockwise className="h-4 w-4" weight="bold" /> Voltar ao que eu escrevi
+              </button>
+            )}
+          </div>
+          <p role={recado.erro ? 'alert' : undefined} className={`mt-2 text-[12.5px] leading-snug ${recado.erro ? 'font-bold text-erro' : 'text-mudo-2'}`}>
+            {recado.erro ||
+              (iaLigada
+                ? 'Escreva do seu jeito e clique em gerar: a IA reescreve no tom da proposta, sem inventar nada. Você pode editar depois.'
+                : 'Para ligar a IA, cadastre a chave ANTHROPIC_API_KEY na Vercel.')}
+          </p>
         </Etapa>
       </div>
 

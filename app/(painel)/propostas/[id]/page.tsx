@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft } from '@phosphor-icons/react/dist/ssr';
 import { buscarProposta, tabelaAtual } from '@/lib/dados';
 import { tituloDa } from '@/lib/precos';
+import { iaConfigurada } from '@/lib/recado';
 import Editor from '../editor';
 
 type Props = { params: Promise<{ id: string }> };
@@ -26,6 +27,7 @@ export default async function EditarProposta({ params }: Props) {
         key={p.id}
         inicial={p.dados}
         tabela={await tabelaAtual()}
+        iaLigada={iaConfigurada()}
         meta={{ id: p.id, token: p.token, status: p.status, abertaEm: p.abertaEm, aberturas: p.aberturas, aceite: p.aceite, enviadaEm: p.enviadaEm }}
       />
     </>
