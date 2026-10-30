@@ -1,6 +1,6 @@
 /**
- * Conexão com o Postgres (Neon, instalado pela aba Storage da Vercel, que
- * cria sozinho a variável DATABASE_URL). Só o servidor fala com o banco.
+ * Conexão com o Postgres (Neon, instalado pela aba Storage da Vercel). Só o
+ * servidor fala com o banco.
  *
  * As tabelas nascem sozinhas na primeira consulta (garantirTabelas), então
  * ninguém precisa rodar nada no banco à mão.
@@ -8,7 +8,37 @@
 
 import postgres from 'postgres';
 
-const URL_BANCO = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
+/**
+ * A Vercel cria a variável com nomes diferentes conforme a tela usada
+ * (DATABASE_URL, POSTGRES_URL, ou com prefixo, como STORAGE_DATABASE_URL).
+ * Vale a primeira que existir.
+ */
+function acharUrl(): string {
+  const env = process.env;
+  const direta = env.DATABASE_URL || env.POSTGRES_URL;
+  if (direta) return direta;
+  const chave = Object.keys(env).find((k) => /(^|_)(DATABASE_URL|POSTGRES_URL)$/.test(k) && env[k]);
+  return chave ? env[chave]! : '';
+}
+
+/**
+ * O endereço do Neon vem com channel_binding=require, que o postgres.js
+ * repassa ao servidor como configuração e o servidor recusa. A conexão
+ * continua criptografada (ssl) sem ele.
+ */
+function limparUrl(bruta: string): string {
+  try {
+    const u = new URL(bruta);
+    u.searchParams.delete('channel_binding');
+    return u.toString();
+  } catch {
+    return bruta;
+  }
+}
+
+const URL_BANCO = limparUrl(acharUrl());
+
+export const temBanco = Boolean(URL_BANCO);
 
 type Sql = ReturnType<typeof postgres>;
 const g = globalThis as unknown as { __tdSql?: Sql; __tdPronto?: Promise<void> };
@@ -19,7 +49,7 @@ function criar(): Sql {
 }
 
 function bruto(): Sql {
-  if (!URL_BANCO) throw new Error('Banco não configurado: conecte o banco na aba Storage da Vercel (cria a variável DATABASE_URL).');
+  if (!URL_BANCO) throw new Error('SEM_BANCO');
   if (!g.__tdSql) g.__tdSql = criar();
   return g.__tdSql;
 }
@@ -35,6 +65,20 @@ export async function db(): Promise<Sql> {
   }
   await g.__tdPronto;
   return sql;
+}
+
+/** para a tela de erro: o que deu errado, sem mostrar endereço nem senha */
+export async function diagnostico(): Promise<{ ok: boolean; texto: string }> {
+  if (!URL_BANCO) return { ok: false, texto: 'O painel não achou o banco. Conecte o Neon em Storage na Vercel e faça Redeploy.' };
+  try {
+    const sql = await db();
+    await sql`select 1`;
+    return { ok: true, texto: 'Banco conectado.' };
+  } catch (e) {
+    const err = e as { code?: string; message?: string };
+    const msg = String(err.message || '').replace(/postgres(ql)?:\/\/\S+/gi, '[endereço]').slice(0, 200);
+    return { ok: false, texto: `O banco respondeu com erro${err.code ? ` (${err.code})` : ''}: ${msg}` };
+  }
 }
 
 async function garantirTabelas(sql: Sql) {

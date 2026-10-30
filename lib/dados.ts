@@ -173,7 +173,9 @@ export async function registrarAceite(id: string, nome: string): Promise<boolean
 
 /** limite de tentativas por chave (login, aceite): true = passou do limite */
 export async function estourou(chave: string, max: number, minutos: number): Promise<boolean> {
-  const sql = await db();
+  // sem banco não há como contar: deixa passar (a tela de configuração avisa o que falta)
+  const sql = await db().catch(() => null);
+  if (!sql) return false;
   await sql`delete from tentativas where em < now() - interval '1 day'`;
   const [r] = await sql`select count(*)::int as n from tentativas where chave = ${chave} and em > now() - make_interval(mins => ${minutos})`;
   if ((r.n as number) >= max) return true;
